@@ -4,6 +4,8 @@
 
 Este repositorio proporciona un andamiaje industrial y profesional listo para producción, diseñado para soportar aplicaciones web complejas, multi-dominio y de escala empresarial con soporte para marca blanca (white-label).
 
+* 🔗 **Repositorio:** [https://github.com/felixmarquez27/mf-enterprise-skeleton](https://github.com/felixmarquez27/mf-enterprise-skeleton)
+
 ---
 
 ## 🏛️ Arquitectura del Sistema
@@ -95,8 +97,8 @@ El repositorio incluye estándares arquitectónicos y guías de ingeniería form
 Clona el repositorio e instala las dependencias de todos los workspaces:
 
 ```bash
-git clone <url-del-repositorio>
-cd <directorio-del-proyecto>
+git clone https://github.com/felixmarquez27/mf-enterprise-skeleton.git
+cd mf-enterprise-skeleton
 pnpm install
 ```
 
