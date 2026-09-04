@@ -1,0 +1,53 @@
+version: '3.8'
+
+# Desarrollo - Ejecutar desde la raíz: docker compose -f docker-compose.dev.yml up -d --build
+
+services:
+  host-dev:
+    build:
+      context: .
+      dockerfile: host/Dockerfile.dev
+    container_name: mf-host-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./host/src:/app/host/src
+      - ./host/public:/app/host/public
+      - ./shared-ui:/app/shared-ui
+      - ./packages/design-system:/app/packages/design-system
+      - /app/node_modules
+      - /app/host/node_modules
+      - /app/users/node_modules
+      - /app/shared-ui/node_modules
+      - /app/packages/design-system/node_modules
+    environment:
+      - NODE_ENV=development
+      - USERS_URL=http://localhost:3001
+    networks:
+      - mf-network
+
+  users-dev:
+    build:
+      context: .
+      dockerfile: users/Dockerfile.dev
+    container_name: mf-users-dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./users/src:/app/users/src
+      - ./users/public:/app/users/public
+      - ./shared-ui:/app/shared-ui
+      - ./packages/design-system:/app/packages/design-system
+      - /app/node_modules
+      - /app/host/node_modules
+      - /app/users/node_modules
+      - /app/shared-ui/node_modules
+      - /app/packages/design-system/node_modules
+    environment:
+      - NODE_ENV=development
+    networks:
+      - mf-network
+
+networks:
+  mf-network:
+    driver: bridge

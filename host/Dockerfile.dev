@@ -1,0 +1,27 @@
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Instalar dependencias del sistema y habilitar pnpm
+RUN apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copiar manifiestos para aprovechar el cache de Docker al instalar dependencias
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY host/package.json ./host/
+COPY users/package.json ./users/
+COPY shared-ui/package.json ./shared-ui/
+COPY packages/design-system/package.json ./packages/design-system/
+
+# Instalar dependencias del monorepo
+RUN pnpm install
+
+# Copiar el resto del código
+COPY . .
+
+# Compilar librería compartida requerida
+RUN pnpm --filter @mf-rsbuild-example/shared-ui build
+
+EXPOSE 3000
+
+CMD ["pnpm", "--filter", "react-host", "dev", "--host", "0.0.0.0", "--port", "3000"]

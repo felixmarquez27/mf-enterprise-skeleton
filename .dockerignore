@@ -1,0 +1,19 @@
+# Dependencias y paquetes
+node_modules
+**/node_modules
+.pnpm-store
+**/.pnpm-store
+
+# Caché y builds
+.turbo
+**/.turbo
+dist
+**/dist
+*.tsbuildinfo
+
+# Control de versiones y editor
+.git
+.gitignore
+*.md
+.vscode
+.idea

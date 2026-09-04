@@ -1,0 +1,41 @@
+version: '3.8'
+
+# Producción - Ejecutar desde la raíz: docker compose up -d --build
+
+services:
+  host:
+    build:
+      context: .
+      dockerfile: host/Dockerfile
+    container_name: mf-host
+    expose:
+      - "80"
+    networks:
+      - mf-network
+
+  users:
+    build:
+      context: .
+      dockerfile: users/Dockerfile
+    container_name: mf-users
+    expose:
+      - "80"
+    networks:
+      - mf-network
+
+  proxy:
+    image: nginx:alpine
+    container_name: mf-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./proxy/nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - host
+      - users
+    networks:
+      - mf-network
+
+networks:
+  mf-network:
+    driver: bridge
