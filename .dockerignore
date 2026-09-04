@@ -17,3 +17,8 @@ dist
 *.md
 .vscode
 .idea
+
+# Environment files
+.env
+.env.*
+!.env.example
