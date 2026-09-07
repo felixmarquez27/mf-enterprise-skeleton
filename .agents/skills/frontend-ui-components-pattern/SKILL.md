@@ -54,9 +54,9 @@ host/src/ o users/src/
 
 ---
 
-## 3. Estilos Globales Centralizados (`design-system/styles.css`)
+## 3. Estilos Globales Centralizados y Estrategia de CSS en Microfrontends
 
-Para mantener consistencia total y evitar duplicar archivos CSS en cada microfrontend:
+Para mantener consistencia total, evitar duplicar CSS base y asegurar que los remotes tengan todas sus clases de Tailwind disponibles:
 
 1. **Capa Base en el Design System:** [packages/design-system/src/styles/globals.css](file:///c:/Users/integ/Documents/workspace/hitss/admin-claro/packages/design-system/src/styles/globals.css) define las directivas de Tailwind y los estilos base del documento:
    ```css
@@ -80,13 +80,27 @@ Para mantener consistencia total y evitar duplicar archivos CSS en cada microfro
      }
    }
    ```
+
 2. **Importación Única en el Shell (Host):**
    El Host es el dueño del viewport del navegador (`<html>`, `<body>`). Importa directamente:
    ```tsx
    import "design-system/styles.css";
    ```
-   No se crean archivos `App.css` con estilos base en el host ni en los remotes.
-3. **Aislamiento en Remotos:** Los microfrontends federados (`users`) no deben re-declarar `@tailwind base` ni alterar el `body` para no interferir con el shell al montarse.
+   No se crean archivos `App.css` con estilos base en el host.
+
+3. **Aislamiento y Compilación de Clases en Remotos Federados (`users`):**
+   - El componente expuesto de un microfrontend (`App.tsx`) **nunca** debe importar `design-system/styles.css`, ya que inyectaría un segundo `@tailwind base` y resetearía los estilos del Shell.
+   - Para que el microfrontend sea autónomo y tenga disponibles todas las clases de Tailwind que utiliza (como `md:grid-cols-2`, `gap-6`, etc.), su archivo CSS local (`App.css`) contiene únicamente:
+     ```css
+     @import "design-system/theme.css";
+
+     @tailwind components;
+     @tailwind utilities;
+     ```
+   - Module Federation 2.0 empaqueta estas utilidades en un chunk CSS ligero (`__federation_expose_users_app...css`) que se inyecta dinámicamente de forma limpia al montar el remoto en el Shell.
+
+4. **Estilos en Modo Standalone (`bootstrap.tsx`):**
+   - Cuando el microfrontend remoto corre de forma aislada en desarrollo local (`localhost:3001`), su archivo `bootstrap.tsx` importa `import "design-system/styles.css";` para tener la capa base completa de estilos mientras no esté dentro del Host.
 
 ---
 

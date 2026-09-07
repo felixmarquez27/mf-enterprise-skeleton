@@ -249,3 +249,52 @@ export function useLogout() {
 
 1. **Host como Autoridad:** El Host valida la sesión antes de montar cualquier microfrontend remoto.
 2. **Caché Compartida:** Gracias a que `@tanstack/react-query` es `singleton: true`, los datos del usuario autenticado en `authKeys.user()` están disponibles inmediatamente para cualquier microfrontend remoto sin hacer llamadas HTTP redundantes.
+
+---
+
+## 6. Emulación de Autenticación con Mocks (`mocks/auth.mock.ts`)
+
+Durante el desarrollo frontend o pruebas de integración sin backend conectado, la autenticación se simula mediante una función pura que devuelve una estructura estándar OAuth2 / JWT:
+
+```typescript
+// host/src/features/auth/mocks/auth.mock.ts
+
+import { AuthResponse } from "../types/auth.types";
+
+export function getMockAuthResponse(): AuthResponse {
+  const mockJwtToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c3JfMTAwMSIsIm5hbWUiOiJBZG1pbmlzdHJhZG9yIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbS5hciIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTcyNTcwMDAwMCwiZXhwIjoxNzU3MjM2MDAwfQ.mock_signature_hash";
+
+  return {
+    token_type: "Bearer",
+    access_token: mockJwtToken,
+    token: mockJwtToken,
+    expires_in: 86400,
+    refresh_token: "mock_refresh_token_xyz",
+    user: {
+      id: "usr_1001",
+      name: "Administrador Corporativo",
+      email: "admin@example.com.ar",
+      role: "ADMIN",
+    },
+  };
+}
+
+export default getMockAuthResponse;
+```
+
+En `authService`, el método `login` retorna `getMockAuthResponse()` directamente, permitiendo que al desplegar la API real solo se cambie una línea por `await apiClient.post("/auth/login", credentials)` sin alterar los hooks ni los componentes de login.
+
+---
+
+## 7. Arquitectura de Seguridad: Cookies `HttpOnly` vs `localStorage`
+
+- **En Desarrollo Frontend / Emulación:**  
+  El token JWT se almacena temporalmente en `localStorage` (`"auth_token"`). Esto es necesario porque JavaScript en el cliente **no tiene permisos** para crear o configurar cookies con la bandera `HttpOnly`.
+- **En Producción con Backend Real:**  
+  1. El servidor de autenticación es el único que puede y debe emitir la cookie a través del encabezado HTTP:
+     ```http
+     Set-Cookie: auth_token=<jwt>; HttpOnly; Secure; SameSite=Lax; Path=/
+     ```
+  2. Al estar configurado `withCredentials: true` en la instancia central de Axios (`host/src/lib/axios.ts`), el navegador adjunta automáticamente la cookie en todas las peticiones hacia el backend sin requerir manipulación manual ni exposición en `localStorage`.
+

@@ -10,8 +10,10 @@
   "dependencies": {
     "@hookform/resolvers": "catalog:",
     "@tanstack/react-query": "catalog:",
+    "axios": "catalog:",
     "design-system": "workspace:*",
     "i18next": "^26.4.2",
+    "lucide-react": "catalog:",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "catalog:",

@@ -35,8 +35,9 @@ mf-platform/
 │   ├── src/
 │   │   ├── features/                   # Domain features (e.g. users)
 │   │   │   └── users/                  # Users feature module (see Section 1)
-│   │   ├── App.tsx                     # Federated entry component (exposed as ./users-app)
-│   │   └── bootstrap.tsx               # Standalone runner entry point
+│   │   ├── pages/                      # Remote views / screens (UsersListPage, UserDetailPage)
+│   │   ├── App.tsx                     # Federated entry component with relative <Routes> (exposed as ./users-app)
+│   │   └── bootstrap.tsx               # Standalone runner entry point (isolated BrowserRouter + QueryClientProvider)
 │   └── rsbuild.config.ts               # Module Federation Remote configuration
 └── packages/
     └── design-system/                  # Shared UI library (design-system)
@@ -67,10 +68,12 @@ src/features/<feature>/
 │   ├── index.ts                        # Barrel export for all hooks
 │   ├── use<Entity>.ts                  # Query hook (GET single/list)
 │   └── useCreate<Entity>.ts            # Mutation hook (POST/PUT/DELETE)
+├── mocks/
+│   └── <feature>.mock.ts               # Mock data, filter simulation & emulated network latency
 ├── services/
 │   ├── index.ts                        # Barrel export for keys + service
 │   ├── <feature>.keys.ts               # TanStack Query key factory
-│   └── <feature>.services.ts           # Async API service calling external REST API
+│   └── <feature>.services.ts           # Async API service calling external REST API or mock
 ├── types/
 │   └── <feature>.types.ts              # TypeScript interfaces/types
 └── index.ts                            # Root barrel export (re-exports all)
@@ -139,40 +142,101 @@ export const usersKeys = {
 
 ---
 
-## 4. API Service Object (`services/<feature>.services.ts`)
+## 4. Mock Data Layer (`mocks/<feature>.mock.ts`)
 
-Create a single object that groups all HTTP calls for the feature against the external REST API using `apiClient`.
+Durante el desarrollo frontend o cuando el backend aún no está disponible, cada feature define un archivo mock con datos realistas, emulación de latencia de red y soporte para filtros/búsqueda.
+
+```typescript
+// users/src/features/users/mocks/users.mock.ts
+
+import { User, UserFilters } from "../types/users.types";
+
+export const MOCK_USERS_DATA: User[] = [
+  {
+    id: "usr_101",
+    name: "Carlos Gómez",
+    email: "carlos.gomez@example.com.ar",
+    role: "ADMIN",
+    status: "ACTIVE",
+    phone: "+54 11 4022-8811",
+    department: "Infraestructura y Redes",
+    createdAt: "2024-01-15T09:30:00Z",
+  },
+  // ... más registros representativos
+];
+
+/**
+ * Simula la respuesta asíncrona de la API con latencia y soporte de filtros
+ */
+export async function getMockUsers(filters?: UserFilters): Promise<User[]> {
+  await new Promise((resolve) => setTimeout(resolve, 400)); // Latencia de red emulada
+
+  let result = [...MOCK_USERS_DATA];
+  if (filters?.search) {
+    const q = filters.search.toLowerCase();
+    result = result.filter(
+      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+    );
+  }
+  return result;
+}
+
+export async function getMockUserById(id: string): Promise<User | null> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return MOCK_USERS_DATA.find((u) => u.id === id) || null;
+}
+```
+
+**Reglas para Mocks:**
+1. **Dominios Neutros:** Usar siempre dominios estándar para ejemplos (ej. `@example.com.ar` o `@example.com`, RFC 2606), evitando nombres de empresas reales en datasets de prueba.
+2. **Latencia Emulada:** Usar `setTimeout(..., 300-500)` para que los loaders, skeletons y estados de carga de la UI se comporten de forma realista.
+3. **Firma Idéntica a la API:** La función mock debe devolver exactamente el mismo tipo de datos tipado (`Promise<User[]>`) que devolverá el backend REST.
+
+---
+
+## 5. API Service Object (`services/<feature>.services.ts`)
+
+Crea un objeto único que encapsula las llamadas HTTP del feature. Durante la emulación consume las funciones del mock; al pasar a producción, se sustituye por `apiClient` con 1 sola línea de cambio sin afectar hooks ni vistas.
 
 ```typescript
 // users/src/features/users/services/users.services.ts
 
-import { apiClient, ApiResponse } from '@/lib/axios';
-import { User, CreateUserPayload, UpdateUserPayload } from '../types/users.types';
+import { apiClient } from "@/lib/axios";
+import { User, CreateUserPayload, UpdateUserPayload, UserFilters } from "../types/users.types";
+import { getMockUsers, getMockUserById } from "../mocks/users.mock";
 
 export const usersService = {
-  async getAll(filters?: Record<string, unknown>): Promise<ApiResponse<User[]>> {
-    const response = await apiClient.get<ApiResponse<User[]>>('/users', { params: filters });
+  async getAll(filters?: UserFilters): Promise<User[]> {
+    // Modo Mock durante desarrollo:
+    return getMockUsers(filters);
+
+    // Modo Producción (simplemente descomentar):
+    // const response = await apiClient.get<User[]>('/users', { params: filters });
+    // return response.data;
+  },
+
+  async getById(id: string): Promise<User> {
+    const user = await getMockUserById(id);
+    if (!user) throw new Error("Usuario no encontrado");
+    return user;
+
+    // Modo Producción:
+    // const response = await apiClient.get<User>(`/users/${id}`);
+    // return response.data;
+  },
+
+  async create(payload: CreateUserPayload): Promise<User> {
+    const response = await apiClient.post<User>('/users', payload);
     return response.data;
   },
 
-  async getById(id: string): Promise<ApiResponse<User>> {
-    const response = await apiClient.get<ApiResponse<User>>(`/users/${id}`);
+  async update(id: string, payload: UpdateUserPayload): Promise<User> {
+    const response = await apiClient.put<User>(`/users/${id}`, payload);
     return response.data;
   },
 
-  async create(payload: CreateUserPayload): Promise<ApiResponse<User>> {
-    const response = await apiClient.post<ApiResponse<User>>('/users', payload);
-    return response.data;
-  },
-
-  async update(id: string, payload: UpdateUserPayload): Promise<ApiResponse<User>> {
-    const response = await apiClient.put<ApiResponse<User>>(`/users/${id}`, payload);
-    return response.data;
-  },
-
-  async delete(id: string): Promise<ApiResponse<null>> {
-    const response = await apiClient.delete<ApiResponse<null>>(`/users/${id}`);
-    return response.data;
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/users/${id}`);
   },
 };
 
@@ -181,7 +245,7 @@ export default usersService;
 
 ---
 
-## 5. Services Barrel Export (`services/index.ts`)
+## 6. Services Barrel Export (`services/index.ts`)
 
 ```typescript
 export * from './<feature>.keys';
@@ -190,9 +254,9 @@ export * from './<feature>.services';
 
 ---
 
-## 6. Hooks (`hooks/`)
+## 7. Hooks (`hooks/`)
 
-### 6.1 Query Hook (Read Data)
+### 7.1 Query Hook (Read Data)
 ```typescript
 // users/src/features/users/hooks/useUsers.ts
 
@@ -210,7 +274,7 @@ export function useUsers(filters?: Record<string, unknown>) {
 export default useUsers;
 ```
 
-### 6.2 Mutation Hook (Create / Update / Delete)
+### 7.2 Mutation Hook (Create / Update / Delete)
 ```typescript
 // users/src/features/users/hooks/useCreateUser.ts
 
@@ -235,7 +299,7 @@ export default useCreateUser;
 
 ---
 
-## 7. Hooks Barrel Export (`hooks/index.ts`)
+## 8. Hooks Barrel Export (`hooks/index.ts`)
 
 ```typescript
 export * from './useUsers';
@@ -246,7 +310,7 @@ export * from './useDeleteUser';
 
 ---
 
-## 8. Components (`components/`) & Colocation Pattern
+## 9. Components (`components/`) & Colocation Pattern
 
 Organize complex views using the **Sub-component Colocation Pattern**:
 
@@ -286,7 +350,7 @@ export default UsersTable;
 
 ---
 
-## 9. Feature Root Barrel Export (`index.ts`)
+## 10. Feature Root Barrel Export (`index.ts`)
 
 ```typescript
 export * from './components';
@@ -296,3 +360,89 @@ export * from './types/users.types';
 ```
 
 External consumers inside the microfrontend import from `@/features/<feature>`, never from internal subpaths.
+
+---
+
+## 11. Remote Microfrontend Pages & Relative Routing (`pages/` y `App.tsx`)
+
+Los microfrontends remotos que manejan múltiples pantallas organizan sus vistas completas dentro de `src/pages/` y declaran rutas **relativas** en su `App.tsx`:
+
+```text
+users/src/
+├── pages/
+│   ├── users-list-page.tsx              # Vista principal (Buscador, Cards/Tabla, Badges)
+│   ├── user-detail-page.tsx             # Vista de detalle de la entidad (Card resumen, Back button)
+│   └── index.ts                         # Barrel export
+├── App.tsx                              # Enrutador relativo federado
+└── bootstrap.tsx                        # Runner standalone con providers
+```
+
+### Enrutamiento Relativo (`users/src/App.tsx`):
+```tsx
+import { Routes, Route } from "react-router-dom";
+import { UsersListPage, UserDetailPage } from "./pages";
+
+export function UsersApp() {
+  return (
+    <Routes>
+      <Route path="/" element={<UsersListPage />} />
+      <Route path=":id" element={<UserDetailPage />} />
+    </Routes>
+  );
+}
+
+export default UsersApp;
+```
+
+### Montaje en el Host Shell (`host/src/App.tsx`):
+El Shell monta el componente remoto bajo una ruta con comodín `/*`:
+```tsx
+<Route
+  path="/users/*"
+  element={
+    <Suspense fallback={<Loader className="size-8" />}>
+      <UsersMicrofrontend />
+    </Suspense>
+  }
+/>
+```
+De esta forma:
+- `/users` renderiza automáticamente `UsersListPage`.
+- `/users/usr_101` renderiza `UserDetailPage` recibiendo `const { id } = useParams()`.
+
+---
+
+## 12. Remote Standalone Execution (`bootstrap.tsx`)
+
+Para permitir que cada microfrontend pueda desarrollarse, probarse y desplegarse de manera 100% aislada en su propio puerto (ej. `localhost:3001`):
+
+```tsx
+// users/src/bootstrap.tsx
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "design-system/styles.css"; // Solo en bootstrap se cargan estilos base para standalone
+import App from "./App";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </QueryClientProvider>
+  </React.StrictMode>
+);
+```
+Cuando se monta dentro del Host Shell, el Host ya provee el `<BrowserRouter>` y el `<QueryClientProvider>` singleton, permitiendo integración transparente sin duplicar contextos.

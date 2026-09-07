@@ -53,6 +53,7 @@ Para que la caché de React Query funcione a través de todos los microfrontends
 2. **Provider Centralizado en el Host (`QueryProvider`):** El Host envuelve la aplicación con `<QueryProvider>` (`host/src/providers/query-provider.tsx`), que inicializa `QueryClient` y define el manejo global de errores.
 3. **Remotes Heredan la Caché:** Como la librería es un singleton, cualquier hook `useQuery` ejecutado dentro de un microfrontend remoto (`users`) accede a la misma instancia de caché provista por el Host.
 4. **Invalidaciones Cruzadas:** El Host o cualquier Remote puede invalidar claves (`queryClient.invalidateQueries({ queryKey: usersKeys.all })`) y todos los componentes montados en pantalla se refrescarán reactivamente.
+5. **Fallback Standalone en Remotos (`bootstrap.tsx`):** Para permitir que el microfrontend funcione de manera autónoma en desarrollo local sin el Host, su `bootstrap.tsx` instancia su propio `QueryClient` dentro de `<QueryClientProvider>`. Al integrarse en el Host, el singleton compartido unifica el cliente con el provisto por el Shell.
 
 ---
 
@@ -146,19 +147,31 @@ export const usersKeys = {
 
 ## 6. API Service Pattern (`services/<feature>.services.ts`)
 
+Los servicios son funciones puramente asíncronas y desacopladas de React. Durante el desarrollo frontend se apoyan en los mocks con latencia emulada; para conectar el backend real, solo se descomenta la llamada a `apiClient`:
+
 ```typescript
 import { apiClient } from '@/lib/axios';
-import { User, CreateUserPayload, UpdateUserPayload } from '../types/users.types';
+import { User, CreateUserPayload, UpdateUserPayload, UserFilters } from '../types/users.types';
+import { getMockUsers, getMockUserById } from '../mocks/users.mock';
 
 export const usersService = {
-  async getAll(filters?: Record<string, unknown>): Promise<User[]> {
-    const response = await apiClient.get<User[]>('/users', { params: filters });
-    return response.data;
+  async getAll(filters?: UserFilters): Promise<User[]> {
+    // Desarrollo local con mocks:
+    return getMockUsers(filters);
+
+    // Conexión con REST API real:
+    // const response = await apiClient.get<User[]>('/users', { params: filters });
+    // return response.data;
   },
 
   async getById(id: string | number): Promise<User> {
-    const response = await apiClient.get<User>(`/users/${id}`);
-    return response.data;
+    const user = await getMockUserById(String(id));
+    if (!user) throw new Error("Usuario no encontrado");
+    return user;
+
+    // Conexión con REST API real:
+    // const response = await apiClient.get<User>(`/users/${id}`);
+    // return response.data;
   },
 
   async create(payload: CreateUserPayload): Promise<User> {
