@@ -46,6 +46,14 @@ export default defineConfig({
           singleton: true,
           requiredVersion: false,
         },
+        i18next: {
+          singleton: true,
+          requiredVersion: false,
+        },
+        "react-i18next": {
+          singleton: true,
+          requiredVersion: false,
+        },
         react: {
           requiredVersion: dependencies.react,
           singleton: true,

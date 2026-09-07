@@ -8,15 +8,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "design-system": "workspace:*",
     "@hookform/resolvers": "catalog:",
     "@mf-rsbuild-example/shared-ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "axios": "catalog:",
+    "design-system": "workspace:*",
+    "i18next": "^26.4.2",
+    "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "catalog:",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "catalog:",
+    "react-i18next": "^17.0.13",
     "react-router-dom": "catalog:",
     "rxjs": "7.8.2",
     "zod": "catalog:"

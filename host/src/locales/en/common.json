@@ -1,0 +1,16 @@
+{
+  "welcome": "Welcome",
+  "login": "Log in",
+  "logout": "Log out",
+  "dashboard": "Dashboard",
+  "users": "Users",
+  "loading": "Loading...",
+  "networkError": "Network error or server unavailable",
+  "unauthorized": "Session expired or unauthorized",
+  "forbidden": "You do not have permission to perform this action",
+  "notFound": "Resource not found",
+  "serverError": "Internal server error",
+  "unexpectedError": "An unexpected error occurred",
+  "save": "Save",
+  "cancel": "Cancel"
+}

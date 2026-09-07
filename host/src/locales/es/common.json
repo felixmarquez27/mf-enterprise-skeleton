@@ -1,0 +1,16 @@
+{
+  "welcome": "Bienvenido",
+  "login": "Iniciar sesión",
+  "logout": "Cerrar sesión",
+  "dashboard": "Dashboard",
+  "users": "Usuarios",
+  "loading": "Cargando...",
+  "networkError": "Error de red o servidor no disponible",
+  "unauthorized": "Sesión expirada o no autorizada",
+  "forbidden": "No tienes permisos para realizar esta acción",
+  "notFound": "Recurso no encontrado",
+  "serverError": "Error interno del servidor",
+  "unexpectedError": "Ha ocurrido un error inesperado",
+  "save": "Guardar",
+  "cancel": "Cancelar"
+}

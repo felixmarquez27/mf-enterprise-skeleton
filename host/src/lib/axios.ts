@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { InternalAxiosRequestConfig } from "axios";
 
 const getBaseUrl = (): string => {
   // Soporte para entornos modernos de empaquetado como Rsbuild / Vite
@@ -11,6 +11,13 @@ const getBaseUrl = (): string => {
   }
   return "https://api.ejemplo.com/v1";
 };
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message: string;
+  data: T;
+  errors?: string | null;
+}
 
 export const apiClient = axios.create({
   baseURL: getBaseUrl(),
@@ -31,19 +38,5 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   }
   return config;
 });
-
-// Interceptor de Respuesta: manejar expiración de sesión (401)
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("auth_token");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default apiClient;

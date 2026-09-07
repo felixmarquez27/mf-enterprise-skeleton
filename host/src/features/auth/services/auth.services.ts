@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/apiClient";
+import { apiClient } from "@/lib/axios";
 import { AuthResponse, LoginCredentials, User } from "../types/auth.types";
 import { brandConfig } from "@/config/brand";
 
