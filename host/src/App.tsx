@@ -1,12 +1,11 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import QueryProvider from "@/providers/query-provider";
-import { Toaster } from "design-system";
-import "./App.css";
+import { Toaster, Loader } from "design-system";
+import "design-system/styles.css";
 
-import { ProtectedRoute, GuestRoute } from "./components/guards";
-import { MainLayout } from "./components/layout";
-import { RemoteLoader } from "./components/common";
+import { ProtectedRoute, GuestRoute } from "./features/auth/components";
+import { MainLayout } from "./layout";
 import LoginPage from "./pages/login";
 import DashboardPage from "./pages/dashboard";
 import NotFoundPage from "./pages/not-found";
@@ -31,7 +30,13 @@ export function App() {
               <Route
                 path="/users/*"
                 element={
-                  <Suspense fallback={<RemoteLoader />}>
+                  <Suspense
+                    fallback={
+                      <div className="flex h-64 w-full items-center justify-center">
+                        <Loader className="size-8 text-primary" />
+                      </div>
+                    }
+                  >
                     <UsersMicrofrontend />
                   </Suspense>
                 }
