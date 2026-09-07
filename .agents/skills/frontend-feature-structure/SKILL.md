@@ -18,27 +18,28 @@ Inside each application or microfrontend, business logic is organized into **Mod
 
 ```text
 mf-platform/
-├── host/                               # Host Shell Application (Port 3000)
-│   ├── src/
-│   │   ├── components/                 # Shell-level components (Layout)
-│   │   │   └── layout/                 # Shell layout (Sidebar, Header, MainLayout)
-│   │   ├── config/                     # Shell configurations (brand, i18n, appConfig)
-│   │   ├── features/                   # Shell features (e.g. auth with guards & login-form)
-│   │   │   └── auth/                   # Authentication feature module
-│   │   ├── lib/                        # Shared clients (axios.ts instance)
-│   │   ├── locales/                    # i18n translation dictionaries (es/en)
-│   │   ├── providers/                  # Application providers (QueryProvider)
-│   │   ├── App.tsx                     # Root router with <BrowserRouter>, <Routes> and <Toaster>
-│   │   └── bootstrap.tsx               # Microfrontend entry point
-│   └── rsbuild.config.ts               # Module Federation Host configuration
-├── users/                              # Remote Microfrontend (Port 3001)
-│   ├── src/
-│   │   ├── features/                   # Domain features (e.g. users)
-│   │   │   └── users/                  # Users feature module (see Section 1)
-│   │   ├── pages/                      # Remote views / screens (UsersListPage, UserDetailPage)
-│   │   ├── App.tsx                     # Federated entry component with relative <Routes> (exposed as ./users-app)
-│   │   └── bootstrap.tsx               # Standalone runner entry point (isolated BrowserRouter + QueryClientProvider)
-│   └── rsbuild.config.ts               # Module Federation Remote configuration
+├── apps/
+│   ├── host/                           # Host Shell Application (Port 3000)
+│   │   ├── src/
+│   │   │   ├── components/             # Shell-level components (Layout)
+│   │   │   │   └── layout/             # Shell layout (Sidebar, Header, MainLayout)
+│   │   │   ├── config/                 # Shell configurations (brand, i18n, appConfig)
+│   │   │   ├── features/               # Shell features (e.g. auth with guards & login-form)
+│   │   │   │   └── auth/               # Authentication feature module
+│   │   │   ├── lib/                    # Shared clients (axios.ts instance)
+│   │   │   ├── locales/                # i18n translation dictionaries (es/en)
+│   │   │   ├── providers/              # Application providers (QueryProvider)
+│   │   │   ├── App.tsx                 # Root router with <BrowserRouter>, <Routes> and <Toaster>
+│   │   │   └── bootstrap.tsx           # Microfrontend entry point
+│   │   └── rsbuild.config.ts           # Module Federation Host configuration
+│   └── users/                          # Remote Microfrontend (Port 3001)
+│       ├── src/
+│       │   ├── features/               # Domain features (e.g. users)
+│       │   │   └── users/              # Users feature module (see Section 1)
+│       │   ├── pages/                  # Remote views / screens (UsersListPage, UserDetailPage)
+│       │   ├── App.tsx                 # Federated entry component with relative <Routes> (exposed as ./users-app)
+│       │   └── bootstrap.tsx           # Standalone runner entry point (isolated BrowserRouter + QueryClientProvider)
+│       └── rsbuild.config.ts           # Module Federation Remote configuration
 └── packages/
     └── design-system/                  # Shared UI library (design-system)
         ├── src/

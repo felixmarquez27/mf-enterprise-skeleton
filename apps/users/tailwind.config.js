@@ -5,6 +5,6 @@ export default {
   presets: [preset],
   content: [
     "./src/**/*.{ts,tsx}",
-    "../packages/design-system/src/**/*.{ts,tsx}",
+    "../../packages/design-system/src/**/*.{ts,tsx}",
   ],
 };

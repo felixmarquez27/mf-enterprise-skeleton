@@ -6,7 +6,7 @@ services:
   host:
     build:
       context: .
-      dockerfile: host/Dockerfile
+      dockerfile: apps/host/Dockerfile
     container_name: mf-host
     expose:
       - "80"
@@ -16,7 +16,7 @@ services:
   users:
     build:
       context: .
-      dockerfile: users/Dockerfile
+      dockerfile: apps/users/Dockerfile
     container_name: mf-users
     expose:
       - "80"

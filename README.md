@@ -106,10 +106,10 @@ pnpm install
 El Host está diseñado para operar con configuración dinámica de marca. Copia el archivo de ejemplo:
 
 ```bash
-cp host/.env.example host/.env
+cp apps/host/.env.example apps/host/.env
 ```
 
-Configura las variables según tu plataforma en `host/.env`:
+Configura las variables según tu plataforma en `apps/host/.env`:
 ```env
 PUBLIC_API_URL=https://api.example.com/v1
 PUBLIC_BRAND_NAME=Platform

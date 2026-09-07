@@ -8,8 +8,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copiar manifiestos para aprovechar el cache de Docker al instalar dependencias
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
-COPY host/package.json ./host/
-COPY users/package.json ./users/
+COPY apps/host/package.json ./apps/host/
+COPY apps/users/package.json ./apps/users/
 COPY packages/design-system/package.json ./packages/design-system/
 
 # Instalar dependencias del monorepo
@@ -18,6 +18,6 @@ RUN pnpm install
 # Copiar el resto del código
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3001
 
-CMD ["pnpm", "--filter", "react-host", "dev", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["pnpm", "--filter", "users", "dev", "--host", "0.0.0.0", "--port", "3001"]

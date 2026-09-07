@@ -6,17 +6,17 @@ services:
   host-dev:
     build:
       context: .
-      dockerfile: host/Dockerfile.dev
+      dockerfile: apps/host/Dockerfile.dev
     container_name: mf-host-dev
     ports:
       - "3000:3000"
     volumes:
-      - ./host/src:/app/host/src
-      - ./host/public:/app/host/public
+      - ./apps/host/src:/app/apps/host/src
+      - ./apps/host/public:/app/apps/host/public
       - ./packages/design-system:/app/packages/design-system
       - /app/node_modules
-      - /app/host/node_modules
-      - /app/users/node_modules
+      - /app/apps/host/node_modules
+      - /app/apps/users/node_modules
       - /app/packages/design-system/node_modules
     environment:
       - NODE_ENV=development
@@ -27,17 +27,17 @@ services:
   users-dev:
     build:
       context: .
-      dockerfile: users/Dockerfile.dev
+      dockerfile: apps/users/Dockerfile.dev
     container_name: mf-users-dev
     ports:
       - "3001:3001"
     volumes:
-      - ./users/src:/app/users/src
-      - ./users/public:/app/users/public
+      - ./apps/users/src:/app/apps/users/src
+      - ./apps/users/public:/app/apps/users/public
       - ./packages/design-system:/app/packages/design-system
       - /app/node_modules
-      - /app/host/node_modules
-      - /app/users/node_modules
+      - /app/apps/host/node_modules
+      - /app/apps/users/node_modules
       - /app/packages/design-system/node_modules
     environment:
       - NODE_ENV=development

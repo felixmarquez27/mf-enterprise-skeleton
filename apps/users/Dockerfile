@@ -27,8 +27,8 @@ FROM nginx:alpine AS runner
 WORKDIR /usr/share/nginx/html
 
 RUN rm -rf ./*
-COPY --from=installer /app/users/dist .
-COPY users/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=installer /app/apps/users/dist .
+COPY apps/users/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

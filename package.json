@@ -7,8 +7,7 @@
     "node": ">=22.13.0"
   },
   "workspaces": [
-    "host",
-    "users",
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
