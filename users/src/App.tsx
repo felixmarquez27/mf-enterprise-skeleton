@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { SharedBadge } from "@mf-rsbuild-example/shared-ui";
-import { Button } from "design-system";
+import { Button, Badge } from "design-system";
 import "./App.css";
 import Counter from "./components/Counter";
 
@@ -20,7 +19,9 @@ export default () => {
           <Button variant="default">Shadcn Button</Button>
           <Button variant="outline">Outline</Button>
         </div>
-        <SharedBadge label="shared ui from remote" />
+        <div className="mt-3">
+          <Badge variant="secondary">Remote Microfrontend</Badge>
+        </div>
       </div>
     </section>
   );

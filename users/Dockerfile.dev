@@ -10,7 +10,6 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 COPY host/package.json ./host/
 COPY users/package.json ./users/
-COPY shared-ui/package.json ./shared-ui/
 COPY packages/design-system/package.json ./packages/design-system/
 
 # Instalar dependencias del monorepo
@@ -18,9 +17,6 @@ RUN pnpm install
 
 # Copiar el resto del código
 COPY . .
-
-# Compilar librería compartida requerida
-RUN pnpm --filter @mf-rsbuild-example/shared-ui build
 
 EXPOSE 3001
 

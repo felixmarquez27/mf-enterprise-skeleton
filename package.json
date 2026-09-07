@@ -9,7 +9,6 @@
   "workspaces": [
     "host",
     "users",
-    "shared-ui",
     "packages/*"
   ],
   "scripts": {

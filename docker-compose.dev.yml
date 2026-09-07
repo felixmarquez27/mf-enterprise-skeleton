@@ -13,12 +13,10 @@ services:
     volumes:
       - ./host/src:/app/host/src
       - ./host/public:/app/host/public
-      - ./shared-ui:/app/shared-ui
       - ./packages/design-system:/app/packages/design-system
       - /app/node_modules
       - /app/host/node_modules
       - /app/users/node_modules
-      - /app/shared-ui/node_modules
       - /app/packages/design-system/node_modules
     environment:
       - NODE_ENV=development
@@ -36,12 +34,10 @@ services:
     volumes:
       - ./users/src:/app/users/src
       - ./users/public:/app/users/public
-      - ./shared-ui:/app/shared-ui
       - ./packages/design-system:/app/packages/design-system
       - /app/node_modules
       - /app/host/node_modules
       - /app/users/node_modules
-      - /app/shared-ui/node_modules
       - /app/packages/design-system/node_modules
     environment:
       - NODE_ENV=development

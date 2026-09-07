@@ -34,10 +34,6 @@ export default defineConfig({
       },
       exposes: {},
       shared: {
-        "@mf-rsbuild-example/shared-ui": {
-          singleton: true,
-          requiredVersion: false,
-        },
         "@tanstack/react-query": {
           singleton: true,
           requiredVersion: false,

@@ -1,7 +1,6 @@
 packages:
   - host
   - users
-  - shared-ui
   - packages/*
 
 catalog:
