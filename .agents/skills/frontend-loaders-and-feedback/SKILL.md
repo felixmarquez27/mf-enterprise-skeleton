@@ -14,9 +14,10 @@ This skill establishes the standards for handling **Loading States** and **Visua
 | Strategy | Primary Use Case | UX Goal | Implementation Mechanism |
 | :--- | :--- | :--- | :--- |
 | **1. Skeleton Loaders** | Cargas iniciales de páginas, tablas, tarjetas de detalle (`GET` queries). | Prevenir cambios de layout (CLS) y dar sensación de estructura inmediata. | `Skeleton` adaptado a las dimensiones reales del contenido. |
-| **2. Optimistic Updates** | Acciones instantáneas (activar/desactivar switch, eliminar item localmente). | Feedback de 0ms antes de que el backend responda. | TanStack Query `onMutate` con rollback en `onError`. |
-| **3. Toast Notifications** | Operaciones en segundo plano o feedback de mutaciones (Crear, Editar, Borrar). | Notificación flotante de éxito o error sin bloquear la navegación. | `toast.success()`, `toast.error()`, o `toast.promise()`. |
-| **4. Button Spinner** | Botones de envío en formularios. | Bloquear el botón y evitar múltiples clics accidentales. | `<Button disabled={isLoading}> {isLoading && <Loader2 className="mr-2 size-4 animate-spin" />} Enviar </Button>` |
+| **2. Remote Suspense Loader** | Carga bajo demanda de microfrontends federados remotos. | Feedback minimalista mientras se descargan los bundles JS del remote. | `<Suspense fallback={<div className="flex h-64 w-full items-center justify-center"><Loader className="size-8 text-primary" /></div>}>` |
+| **3. Optimistic Updates** | Acciones instantáneas (activar/desactivar switch, eliminar item localmente). | Feedback de 0ms antes de que el backend responda. | TanStack Query `onMutate` con rollback en `onError`. |
+| **4. Toast Notifications** | Operaciones en segundo plano o feedback de mutaciones (Crear, Editar, Borrar). | Notificación flotante de éxito o error sin bloquear la navegación. | `toast.success()`, `toast.error()`, o `toast.promise()` desde `design-system`. |
+| **5. Button Spinner** | Botones de envío en formularios. | Bloquear el botón y evitar múltiples clics accidentales. | `<Button disabled={isLoading}> {isLoading && <Spinner className="mr-2" />} Enviar </Button>` |
 
 ---
 
@@ -24,11 +25,10 @@ This skill establishes the standards for handling **Loading States** and **Visua
 
 ### Pattern 1: Button Spinner (Prevención de Doble Clic)
 
-Importa `Button` desde `design-system` y `Loader2` desde `lucide-react`:
+Importa `Button` y `Spinner` (o su alias `Loader`) directamente desde `design-system`:
 
 ```tsx
-import { Button } from "design-system";
-import { Loader2 } from "lucide-react";
+import { Button, Spinner } from "design-system";
 
 interface SubmitButtonProps {
   isLoading: boolean;
@@ -43,7 +43,7 @@ export function SubmitButton({
 }: SubmitButtonProps) {
   return (
     <Button type="submit" disabled={isLoading} className="gap-2">
-      {isLoading && <Loader2 className="size-4 animate-spin" />}
+      {isLoading && <Spinner className="size-4" />}
       {isLoading ? loadingText : text}
     </Button>
   );
@@ -52,7 +52,34 @@ export function SubmitButton({
 
 ---
 
-### Pattern 2: Skeleton Loader
+### Pattern 2: Remote Microfrontend Loader (Suspense Fallback)
+
+Cuando un microfrontend remoto se carga bajo demanda con `lazy(() => import("remote/app"))`, se utiliza un contenedor centrado con `<Loader />` de `design-system`:
+
+```tsx
+import { Suspense, lazy } from "react";
+import { Loader } from "design-system";
+
+const UsersMicrofrontend = lazy(() => import("users/users-app"));
+
+export function UsersRoute() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-64 w-full items-center justify-center">
+          <Loader className="size-8 text-primary" />
+        </div>
+      }
+    >
+      <UsersMicrofrontend />
+    </Suspense>
+  );
+}
+```
+
+---
+
+### Pattern 3: Skeleton Loader
 
 ```tsx
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
@@ -86,9 +113,28 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 
 ---
 
-### Pattern 3: Toaster Global en el Shell (`host`)
+### Pattern 4: Toaster Global en el Shell (`host`)
 
-Para que las notificaciones de toast funcionen unificadas a través de todos los microfrontends:
+Para que las notificaciones de toast funcionen unificadas a través de todos los microfrontends sin dependencias dispersas:
 
-1. El contenedor del Toaster (por ejemplo `sonner`) se monta una sola vez en el **Host** (`host/src/App.tsx`).
-2. Cualquier microfrontend remoto (`users`) puede disparar `toast.success("Usuario creado")` y se mostrará limpiamente en la interfaz sin duplicar contenedores de toast.
+1. **`design-system` expone todo:** Tanto el componente `<Toaster />` como la función `toast` se exportan desde el paquete compartido `design-system`. Ningún microfrontend debe instalar `sonner` en su propio `package.json`.
+2. **Montaje único en el Shell:** El contenedor se monta una sola vez en la raíz del **Host** (`host/src/App.tsx`):
+   ```tsx
+   import { Toaster } from "design-system";
+
+   export function App() {
+     return (
+       <>
+         {/* ... rutas y layout ... */}
+         <Toaster position="top-right" richColors />
+       </>
+     );
+   }
+   ```
+3. **Disparo desde cualquier microfrontend:** Cualquier componente o servicio en `host` o en `users` dispara alertas importando `toast`:
+   ```tsx
+   import { toast } from "design-system";
+
+   toast.success("Operación exitosa");
+   toast.error("Ocurrió un error");
+   ```

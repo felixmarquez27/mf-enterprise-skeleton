@@ -14,9 +14,13 @@ This skill defines the rules for composing and styling UI components in the Micr
 Antes de escribir elementos UI personalizados o divs con clases arbitrarias:
 
 1. **Verificar componentes existentes en `design-system`:**  
-   Revisar los componentes ya creados en `packages/design-system/src/components/ui/` (Button, Card, Input, Badge, etc.).
+   Revisar los componentes ya creados en `packages/design-system/src/components/ui/` (Button, Card, Input, Badge, Toaster, toast, Spinner/Loader, etc.).
 2. **Instalar nuevos componentes vía CLI dentro del paquete:**  
    Si se requiere una primitiva adicional de shadcn (ej. Dialog, Select, Dropdown, Table), instalarla siempre dentro de `packages/design-system`:
+   ```bash
+   pnpm dlx shadcn@latest add <component-name> -c packages/design-system
+   ```
+   O situándose en el subdirectorio:
    ```bash
    cd packages/design-system
    pnpm dlx shadcn@latest add <component-name>
@@ -25,7 +29,7 @@ Antes de escribir elementos UI personalizados o divs con clases arbitrarias:
 3. **Consumir en los Microfrontends:**  
    En `host` o en `users`, importar directamente desde el paquete compartido:
    ```tsx
-   import { Button, Card, Input, Badge } from "design-system";
+   import { Button, Card, Input, Badge, Toaster, toast, Loader } from "design-system";
    ```
 
 ---
@@ -36,7 +40,7 @@ El desarrollo de componentes se organiza en 3 capas estrictas:
 
 ```text
 packages/design-system/
-└── components/ui/ ──> Tier 1: Primitivas Atómicas (Button, Input, Card, Badge, Dialog)
+└── components/ui/ ──> Tier 1: Primitivas Atómicas (Button, Input, Card, Badge, Spinner, Toaster, toast)
 
 host/src/ o users/src/
 ├── components/common/ ──> Tier 2: Bloques Compuestos (EmptyState, StatsSummary, FilterBar)
@@ -50,7 +54,43 @@ host/src/ o users/src/
 
 ---
 
-## 3. Reglas Críticas de Estilos (Design Tokens)
+## 3. Estilos Globales Centralizados (`design-system/styles.css`)
+
+Para mantener consistencia total y evitar duplicar archivos CSS en cada microfrontend:
+
+1. **Capa Base en el Design System:** [packages/design-system/src/styles/globals.css](file:///c:/Users/integ/Documents/workspace/hitss/admin-claro/packages/design-system/src/styles/globals.css) define las directivas de Tailwind y los estilos base del documento:
+   ```css
+   @import "./theme.css";
+
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+
+   @layer base {
+     * {
+       box-sizing: border-box;
+       border-color: hsl(var(--border));
+     }
+     body {
+       margin: 0;
+       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+       background-color: hsl(var(--background));
+       color: hsl(var(--foreground));
+       min-height: 100vh;
+     }
+   }
+   ```
+2. **Importación Única en el Shell (Host):**
+   El Host es el dueño del viewport del navegador (`<html>`, `<body>`). Importa directamente:
+   ```tsx
+   import "design-system/styles.css";
+   ```
+   No se crean archivos `App.css` con estilos base en el host ni en los remotes.
+3. **Aislamiento en Remotos:** Los microfrontends federados (`users`) no deben re-declarar `@tailwind base` ni alterar el `body` para no interferir con el shell al montarse.
+
+---
+
+## 4. Reglas Críticas de Estilos (Design Tokens)
 
 1. **Tokens Semánticos:** Usa siempre las variables de color del tema (`bg-primary`, `text-primary-foreground`, `bg-background`, `text-muted-foreground`, `border-border`). Nunca uses colores fijos como `bg-blue-500` o `text-gray-700`.
 2. **Espaciado con `gap-*`:** Usa `flex flex-col gap-4` o `flex items-center gap-2` en lugar de márgenes arbitrarios.

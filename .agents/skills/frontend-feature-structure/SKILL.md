@@ -6,9 +6,9 @@ description: "Instructions for creating and structuring feature modules in the M
 # Microfrontend Architecture & Feature Structure
 
 This frontend follows a Microfrontend architecture managed with **Turborepo**, **pnpm workspaces**, **Rsbuild**, and **Module Federation**, consisting of:
-- **Host (Shell)**: Manages global routing (`react-router-dom`), shell layout (Sidebar, Header), session authentication, and global providers (TanStack `QueryClientProvider`).
+- **Host (Shell)**: Manages global routing (`react-router-dom`), shell layout (Sidebar, Header), session authentication, i18n translation configuration, and global providers (`QueryProvider`, `Toaster`).
 - **Remotes (e.g. `users`)**: Domain-specific microfrontends exposing independent federated views and components.
-- **Shared Packages (`packages/design-system`)**: Centralized design system (`design-system`) providing shadcn/ui primitives, theme tokens, and Tailwind presets.
+- **Shared Packages (`packages/design-system`)**: Centralized design system (`design-system`) providing shadcn/ui primitives, theme tokens, Toaster, Spinner, and Tailwind presets.
 
 Inside each application or microfrontend, business logic is organized into **Modular Feature Modules** (`src/features/<feature-name>/`).
 
@@ -20,12 +20,15 @@ Inside each application or microfrontend, business logic is organized into **Mod
 mf-platform/
 ├── host/                               # Host Shell Application (Port 3000)
 │   ├── src/
-│   │   ├── components/                 # Shell-level components (Layouts, Guards)
-│   │   │   ├── layout/                 # Shell layout (Sidebar, Header, MainLayout)
-│   │   │   └── guards/                 # Route guards (ProtectedRoute, GuestRoute)
-│   │   ├── config/                     # Shell configurations (routes, queryClient)
-│   │   ├── lib/                        # Shared clients (apiClient axios instance)
-│   │   ├── App.tsx                     # Root router with <BrowserRouter> and <Routes>
+│   │   ├── components/                 # Shell-level components (Layout)
+│   │   │   └── layout/                 # Shell layout (Sidebar, Header, MainLayout)
+│   │   ├── config/                     # Shell configurations (brand, i18n, appConfig)
+│   │   ├── features/                   # Shell features (e.g. auth with guards & login-form)
+│   │   │   └── auth/                   # Authentication feature module
+│   │   ├── lib/                        # Shared clients (axios.ts instance)
+│   │   ├── locales/                    # i18n translation dictionaries (es/en)
+│   │   ├── providers/                  # Application providers (QueryProvider)
+│   │   ├── App.tsx                     # Root router with <BrowserRouter>, <Routes> and <Toaster>
 │   │   └── bootstrap.tsx               # Microfrontend entry point
 │   └── rsbuild.config.ts               # Module Federation Host configuration
 ├── users/                              # Remote Microfrontend (Port 3001)
@@ -38,8 +41,9 @@ mf-platform/
 └── packages/
     └── design-system/                  # Shared UI library (design-system)
         ├── src/
-        │   ├── components/ui/          # shadcn/ui components (Button, Card, Input, Badge)
+        │   ├── components/ui/          # shadcn/ui components (Button, Card, Input, Badge, Sonner, Spinner)
         │   ├── lib/utils.ts            # cn() utility function
+        │   ├── styles/globals.css      # Baseline styles & @layer base
         │   └── styles/theme.css        # Design tokens & HSL variables
         └── tailwind.preset.js          # Shared Tailwind preset
 ```
@@ -142,7 +146,7 @@ Create a single object that groups all HTTP calls for the feature against the ex
 ```typescript
 // users/src/features/users/services/users.services.ts
 
-import { apiClient, ApiResponse } from '@/lib/apiClient';
+import { apiClient, ApiResponse } from '@/lib/axios';
 import { User, CreateUserPayload, UpdateUserPayload } from '../types/users.types';
 
 export const usersService = {

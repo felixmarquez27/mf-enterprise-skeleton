@@ -5,7 +5,7 @@ description: "Instructions for managing asynchronous server state, API services,
 
 # TanStack Query (React Query) & Data Layer Pattern (Microfrontends)
 
-This skill defines the architecture and standards for managing **Server State**, **REST API Data Fetching**, **Query Key Factories**, and **Cache Invalidation** using TanStack Query v5 in a Microfrontend architecture.
+This skill defines the architecture and standards for managing **Server State**, **REST API Data Fetching**, **Query Key Factories**, **Global Error Handling with i18n**, and **Cache Invalidation** using TanStack Query v5 in a Microfrontend architecture.
 
 ---
 
@@ -23,7 +23,7 @@ Data fetching strictly decouples UI components from HTTP communication through a
 [ API Service Object ]   [ Query Key Factory ]
        │                        │
        ▼                        ▼
-[ Axios Client (apiClient) ] ───► [ TanStack Query Cache (Shared Singleton) ]
+[ Axios Client (axios.ts) ] ──► [ TanStack Query Cache (Shared Singleton) ]
        │
        ▼
 [ External REST API (https://api.backend.com/...) ]
@@ -50,13 +50,64 @@ Para que la caché de React Query funcione a través de todos los microfrontends
      },
    }
    ```
-2. **Provider Único en el Host:** El Host inicializa el `QueryClient` y envuelve la aplicación con `<QueryClientProvider client={queryClient}>`.
+2. **Provider Centralizado en el Host (`QueryProvider`):** El Host envuelve la aplicación con `<QueryProvider>` (`host/src/providers/query-provider.tsx`), que inicializa `QueryClient` y define el manejo global de errores.
 3. **Remotes Heredan la Caché:** Como la librería es un singleton, cualquier hook `useQuery` ejecutado dentro de un microfrontend remoto (`users`) accede a la misma instancia de caché provista por el Host.
 4. **Invalidaciones Cruzadas:** El Host o cualquier Remote puede invalidar claves (`queryClient.invalidateQueries({ queryKey: usersKeys.all })`) y todos los componentes montados en pantalla se refrescarán reactivamente.
 
 ---
 
-## 3. Directory Structure per Feature
+## 3. Global Error Handling & i18n Translation Mapping
+
+El Host intercepta todos los fallos globales de consultas (`QueryCache`) y mutaciones (`MutationCache`) dentro de `QueryProvider`, mapeando los códigos de estado HTTP a simples **llaves de traducción de `/locales`** (`common.json`):
+
+```tsx
+// host/src/providers/query-provider.tsx
+function getErrorTranslationKey(status?: number): string {
+  if (!status) return "networkError";
+
+  switch (status) {
+    case 401:
+      return "unauthorized";
+    case 403:
+      return "forbidden";
+    case 404:
+      return "notFound";
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      return "serverError";
+    default:
+      return "unexpectedError";
+  }
+}
+```
+
+### Reglas del Manejador Global:
+1. **Error 422 (Validaciones):** Se omite el toast global para permitir que los formularios gestionados por `react-hook-form` muestren los errores en cada campo.
+2. **Error 401 (Sesión Expirada):**
+   - Remueve el token: `localStorage.removeItem("auth_token")`.
+   - Limpia la memoria de React Query: `queryClient.clear()`.
+   - Dispara la notificación traducida: `toast.error(i18n.t("unauthorized"))`.
+   - Redirige a `/login` si el usuario no se encuentra allí.
+3. **Silenciamiento Selectivo:** Si un hook o mutación desea omitir la alerta global de error (por ejemplo, para manejar su propio estado en pantalla):
+   ```tsx
+   useMutation({
+     mutationFn: myAction,
+     meta: { suppressToast: true },
+   });
+   ```
+4. **Llave Personalizada:** Si una mutación desea forzar un mensaje de traducción específico:
+   ```tsx
+   useMutation({
+     mutationFn: deleteUser,
+     meta: { errorMessageKey: "users.deleteError" },
+   });
+   ```
+
+---
+
+## 4. Directory Structure per Feature
 
 Cada microfrontend organiza sus llamadas a la API dentro de su respectiva feature:
 
@@ -65,7 +116,7 @@ src/features/<feature>/
 ├── services/
 │   ├── index.ts                 # Barrel export: export * from './<feature>.keys'; export * from './<feature>.services';
 │   ├── <feature>.keys.ts        # Centralized Query Key Factory
-│   └── <feature>.services.ts    # Async API calls using apiClient
+│   └── <feature>.services.ts    # Async API calls using apiClient from '@/lib/axios'
 ├── hooks/
 │   ├── index.ts                 # Barrel export of all custom hooks
 │   ├── use<Entities>.ts         # Query hook (List/Get All)
@@ -79,7 +130,7 @@ src/features/<feature>/
 
 ---
 
-## 4. Query Key Factory Pattern (`services/<feature>.keys.ts`)
+## 5. Query Key Factory Pattern (`services/<feature>.keys.ts`)
 
 ```typescript
 export const usersKeys = {
@@ -93,10 +144,10 @@ export const usersKeys = {
 
 ---
 
-## 5. API Service Pattern (`services/<feature>.services.ts`)
+## 6. API Service Pattern (`services/<feature>.services.ts`)
 
 ```typescript
-import { apiClient } from '@/lib/apiClient';
+import { apiClient } from '@/lib/axios';
 import { User, CreateUserPayload, UpdateUserPayload } from '../types/users.types';
 
 export const usersService = {
@@ -130,7 +181,7 @@ export default usersService;
 
 ---
 
-## 6. Custom Hooks Pattern (`hooks/`)
+## 7. Custom Hooks Pattern (`hooks/`)
 
 ### Query Hook
 ```typescript
