@@ -58,7 +58,7 @@ host/src/ o users/src/
 
 Para mantener consistencia total, evitar duplicar CSS base y asegurar que los remotes tengan todas sus clases de Tailwind disponibles:
 
-1. **Capa Base en el Design System:** [packages/design-system/src/styles/globals.css](file:///c:/Users/integ/Documents/workspace/hitss/admin-claro/packages/design-system/src/styles/globals.css) define las directivas de Tailwind y los estilos base del documento:
+1. **Capa Base en el Design System:** [packages/design-system/src/styles/globals.css](../../../packages/design-system/src/styles/globals.css) define las directivas de Tailwind y los estilos base del documento:
    ```css
    @import "./theme.css";
 

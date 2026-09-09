@@ -16,8 +16,8 @@ export function getMockAuthResponse(): AuthResponse {
     refresh_token: "mock_refresh_token_xyz",
     user: {
       id: "usr_1001",
-      name: "Administrador Claro",
-      email: "admin@claro.com.ar",
+      name: "Administrador",
+      email: "admin@example.com",
       role: "ADMIN",
     },
   };
